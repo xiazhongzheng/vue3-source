@@ -1,13 +1,16 @@
 import { extend, isObject } from '@vue/shared'
+import { track } from './effect';
+import { TrackOpTypes } from './operators';
 import { reactive, readonly } from './reactive';
 // 是不是只读， 是不是深度
 
 function createGetter(isReadonly = false, shallow = false) {
-    return function get (target, key, receiver) {
+    return function get(target, key, receiver) {
         const res = Reflect.get(target, key, receiver)
 
         if (!isReadonly) {
             // 收集依赖
+            track(target, TrackOpTypes.GET, key);
         }
 
         if (shallow) {
