@@ -1,6 +1,6 @@
-import { extend, isObject } from '@vue/shared'
-import { track } from './effect';
-import { TrackOpTypes } from './operators';
+import { extend, hasChange, hasOwn, isArray, isIntegerKey, isObject } from '@vue/shared'
+import { track, trigger } from './effect';
+import { TrackOpTypes, TriggerOrTypes } from './operators';
 import { reactive, readonly } from './reactive';
 // 是不是只读， 是不是深度
 
@@ -26,7 +26,21 @@ function createGetter(isReadonly = false, shallow = false) {
 }
 function createSetter(shallow = false) {
     return function set(target, key, value, reveiver) {
+        console.log('set')
+        const oldValue = target[key];
+        // 数组push方法等，也会修改length和索引
+        let hasKey = isArray(target) && isIntegerKey(key) ? Number(key) < target.length : hasOwn(target, key);
+        
         const result = Reflect.set(target, key, value, reveiver);
+        // vue2无法监控更改索引，vue3可以
+
+        if(!hasKey){
+            // 新增
+            trigger(target, TriggerOrTypes.ADD, key, value);
+        } else if (hasChange(oldValue, value)) {
+            // 修改
+            trigger(target, TriggerOrTypes.SET, key, value, oldValue);
+        }
 
 
         return result;
