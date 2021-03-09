@@ -7,6 +7,7 @@ export function effect(fn, options: any = {}) {
     if (!options.lazy) {
         effect();
     }
+    return effect;
 }
 let uid = 0;
 let activeEffect; // 当前effect
@@ -55,7 +56,7 @@ export function track(target, type, key) {
 
 // 触发更新
 export function trigger(target, type, key?, newValue?, oldValue?) {
-    console.log(target)
+    // console.log(target)
     const depsMap = targetMap.get(target);
     if (!depsMap) return;
     // 先放到一起，最终统一执行
@@ -91,7 +92,13 @@ export function trigger(target, type, key?, newValue?, oldValue?) {
 
     }
     effects.forEach((effect: any) => {
-        console.log(1111, effect)
-        effect();
+        // console.log(1111, effect)
+        // console.log(effect.id)
+        // console.log(effect.options)
+        if (effect.options.scheduler) {
+            effect.options.scheduler();
+        } else {
+            effect();
+        }
     });
 }
